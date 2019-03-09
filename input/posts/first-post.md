@@ -1,6 +1,9 @@
+---
 Title: First Post
 Published: 1/1/2016
-Tags: [Introduction, C#]
+Tags: [Introduction]
+author: Johan Vergeer
+Category: C#
 ---
 This is my first post!
 
@@ -10,17 +13,6 @@ public class Foo
   int Baz { get; set; }  
 }  
 ```
-
-
-<?# Foo ?>
-
-```cs
-public class Foo  
-{  
-  int Baz { get; set; }  
-}  
-```
-<?#/ Foo ?>
 
 <div class="note">
 Exercitation dolor nisi sit dolor nulla Lorem. Ipsum cillum incididunt id ex tempor mollit voluptate anim occaecat Lorem sit. Qui ut consectetur sunt culpa voluptate. Veniam id quis deserunt velit ut deserunt nulla do commodo mollit.

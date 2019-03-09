@@ -17,4 +17,4 @@ ShortcodeCollection.Add("Warning", (string x) => $"<div class='box box-warning'>
 
 ShortcodeCollection.Add("Example", (string x) => $"<div class='box box-example'>{x}</div>");
 
-ShortcodeCollection.Add("Tip", (string x) => $"<div class='box box-tip+'>{x}</div>");
+ShortcodeCollection.Add("Tip", (string x) => $"<div class='box box-tip'>{x}</div>");
