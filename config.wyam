@@ -10,3 +10,11 @@ Settings[BlogKeys.Title] = "My Blog";
 Settings[BlogKeys.Description] = "Welcome!";
 
 // Add any pipeline customizations here
+
+ShortcodeCollection.Add("Note", (string x) => $"<div class='box box-note'>{x}</div>");
+
+ShortcodeCollection.Add("Warning", (string x) => $"<div class='box box-warning'>{x}</div>");
+
+ShortcodeCollection.Add("Example", (string x) => $"<div class='box box-example'>{x}</div>");
+
+ShortcodeCollection.Add("Tip", (string x) => $"<div class='box box-tip+'>{x}</div>");
