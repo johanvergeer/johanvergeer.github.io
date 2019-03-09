@@ -1,5 +1,9 @@
 #recipe Blog
 
+#t Trophy
+
+#n Wyam.Highlight
+
 // Customize your settings and add new ones here
 Settings[Keys.Host] = "host.com";
 Settings[BlogKeys.Title] = "My Blog";
