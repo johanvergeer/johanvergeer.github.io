@@ -6,7 +6,6 @@ variables:
   REPOSITORY_NAME: johanvergeer.github.io
   BRANCH_NAME: master
   system.debug: false
-  GITHUB_ACCESS_TOKEN: $(githubAccessToken)
 
 pool:
   vmImage: vs2017-win2016

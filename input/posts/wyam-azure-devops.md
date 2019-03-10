@@ -194,7 +194,7 @@ In the snippet above we described that all changes in the `source` branch should
 
 ### Variables
 
-Later on we're going to create a PowerShell script that will take some input variables. But before we do that these variables have to be defined. 
+Later on we're going to create a PowerShell script that will take some input variables. But before we do that these variables have to be defined.
 
 ```yaml
 variables:
@@ -213,4 +213,172 @@ variables:
 | REPOSITORY_NAME | The name of your GitHub repository
 | BRANCH_NAME | Name of the branch the site will be published to. For you main site this should be `master`. For other sites this will be gh-pages. See [this GitHub help page](https://help.github.com/en/articles/configuring-a-publishing-source-for-github-pages) for more info. |
 
+### Steps
 
+In this build pipeline we're going to define two steps. In the first step the site will be built using the Cake script. In the second step the output files will be deployed to GitHub Pages.
+
+#### Build the site
+
+In the first step we'll build the site, using the [Cake plugin](https://marketplace.visualstudio.com/items?itemName=cake-build.cake). Install this plugin and add the following snippet to `azure-pipelines.yml` as a child of `steps:`
+
+```yaml
+  - task: cake-build.cake.cake-build-task.Cake@0
+    displayName: "Build Wyam site"
+    inputs:
+      target: Build
+```
+
+#### Publish to GitHub Pages
+
+In this next step we're using a PowerShell script to publish the site to GitHub pages. What this script basically does is clone the `master` branch, empty it, add the contents of the output directory, commit, and push it back to the `master` branch on GitHub. Once this is done, when you visit GitHub Pages, you should see your site. This PowerShell script also uses the variables we defined earlier.
+
+Add the following as another child of `steps:`
+
+```yaml
+ - powershell: |
+      Write-Host "Cloning existing GitHub Pages branch"
+
+      $workingDir = "$(System.DefaultWorkingDirectory)\master"
+
+      git clone https://${env:GITHUB_USERNAME}:$(githubAccessToken)@github.com/${env:GITHUB_USERNAME}/${env:REPOSITORY_NAME}.git --branch=master $workingDir --quiet
+
+      if ($lastexitcode -gt 0)
+      {
+          Write-Host "##vso[task.logissue type=error;]Unable to clone repository - check username, access token and repository name. Error code $lastexitcode"
+          [Environment]::Exit(1)
+      }
+
+      Write-Host "Deleting current documentation from branch"
+
+      Remove-Item -Path $workingDir\* -Recurse
+
+      Write-Host "Copying new documentation into branch"
+
+      Copy-Item ${env:DOC_PATH}\* $workingDir -recurse -Force
+
+      Write-Host "Committing the GitHub Pages Branch"
+
+      Set-Location $workingDir
+      git config core.autocrlf false
+      git config user.email ${env:GITHUB_EMAIL}
+      git config user.name ${env:GITHUB_USERNAME}
+      git add *
+      git commit -m ${env:COMMIT_MESSAGE}
+
+      if ($lastexitcode -gt 0)
+      {
+          Write-Host "##vso[task.logissue type=error;]Error committing - see earlier log, error code $lastexitcode"
+          [Environment]::Exit(1)
+      }
+
+      Write-Host "Pushing the GitHub Pages Branch"
+
+      git push
+
+      if ($lastexitcode -gt 0)
+      {
+          Write-Host "##vso[task.logissue type=error;]Error pushing to master branch, probably an incorrect Personal Access Token, error code $lastexitcode"
+          [Environment]::Exit(1)
+      }
+
+    displayName: "Deploy to GitHub Pages"
+```
+
+##### GitHub Access Token
+
+Next to the variables we defined before, this script also contains a secret, `$(githubAccessToken)`. The GitHub access token can be created in `GitHub settings --> Developer Settings --> Personal Access Tokens`. Click _Generate new token_, enter a _Token description_ and select only the _repo_ scope. Click _Generate token_ and copy this token to a safe location.
+
+This GitHub access token has to be added as a variable in Azure DevOps. Go to the pipeline and click _Edit_. The variables might be hard to find for the untrained eye. Right of the _Run_ button, click the three dots and click _Variables_. Click _+ Add_. Name should be `githubAccessToken` and the value should be the access token you copied from GitHub before. Next to the value you can click a padlock icon, which will make the value a secret.
+
+### The final file
+
+One this I ofter miss when reading a tutorial is the full picture. So here is the full _azure-pipelines.yml_ file. 
+
+```yaml
+variables:
+  COMMIT_MESSAGE: Automated Release $(Release.ReleaseId)
+  DOC_PATH: $(System.DefaultWorkingDirectory)\output
+  GITHUB_EMAIL: username@email.com
+  GITHUB_USERNAME: yourusername
+  REPOSITORY_NAME: yourusername.github.io
+  BRANCH_NAME: master
+
+pool:
+  vmImage: vs2017-win2016
+
+trigger:
+  branches:
+    include:
+      - source
+    exclude:
+      - master
+  paths:
+    exclude:
+      - .gitignore
+      - README.md
+
+
+steps:
+  - task: cake-build.cake.cake-build-task.Cake@0
+    displayName: "Build Wyam site"
+    inputs:
+      target: Build
+
+  - powershell: |
+      Write-Host "Cloning existing GitHub Pages branch"
+
+      $workingDir = "$(System.DefaultWorkingDirectory)\master"
+
+      git clone https://${env:GITHUB_USERNAME}:$(githubAccessToken)@github.com/${env:GITHUB_USERNAME}/${env:REPOSITORY_NAME}.git --branch=master $workingDir --quiet
+
+      if ($lastexitcode -gt 0)
+      {
+          Write-Host "##vso[task.logissue type=error;]Unable to clone repository - check username, access token and repository name. Error code $lastexitcode"
+          [Environment]::Exit(1)
+      }
+
+      Write-Host "Deleting current documentation from branch"
+
+      Remove-Item -Path $workingDir\* -Recurse
+
+      Write-Host "Copying new documentation into branch"
+
+      Copy-Item ${env:DOC_PATH}\* $workingDir -recurse -Force
+
+      Write-Host "Committing the GitHub Pages Branch"
+
+      Set-Location $workingDir
+      git config core.autocrlf false
+      git config user.email ${env:GITHUB_EMAIL}
+      git config user.name ${env:GITHUB_USERNAME}
+      git add *
+      git commit -m ${env:COMMIT_MESSAGE}
+
+      if ($lastexitcode -gt 0)
+      {
+          Write-Host "##vso[task.logissue type=error;]Error committing - see earlier log, error code $lastexitcode"
+          [Environment]::Exit(1)
+      }
+
+      Write-Host "Pushing the GitHub Pages Branch"
+
+      git push
+
+      if ($lastexitcode -gt 0)
+      {
+          Write-Host "##vso[task.logissue type=error;]Error pushing to master branch, probably an incorrect Personal Access Token, error code $lastexitcode"
+          [Environment]::Exit(1)
+      }
+
+    displayName: "Deploy to GitHub Pages"
+```
+
+# Let's Deploy
+
+Now that we're all setup, all we need to do is push to our GitHub repo, which will be picked up by Azure DevOps and a build will start.
+
+```powershell
+PS > git add --all
+PS > git commit -m 'Setup azure-pipelines.yml'
+PS > git push
+```
