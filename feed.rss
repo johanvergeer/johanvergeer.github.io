@@ -5,8 +5,8 @@
 		<link>http://host.com/</link>
 		<description>Welcome!</description>
 		<copyright>2019</copyright>
-		<pubDate>Sun, 10 Mar 2019 16:01:48 GMT</pubDate>
-		<lastBuildDate>Sun, 10 Mar 2019 16:01:48 GMT</lastBuildDate>
+		<pubDate>Sun, 10 Mar 2019 20:20:46 GMT</pubDate>
+		<lastBuildDate>Sun, 10 Mar 2019 20:20:46 GMT</lastBuildDate>
 		<item>
 			<title>Wyam, Azure DevOps and GitHub Pages</title>
 			<link>http://host.com/posts/wyam-azure-devops</link>
@@ -30,8 +30,297 @@ git checkout source
 git push -u origin source
 &lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;These command will clone the repository from GitHub, create a new branch named &lt;code&gt;source&lt;/code&gt;, push the new branch to GitHub and makes &lt;code&gt;source&lt;/code&gt; the default branch. You can check whether you are on the source branch with this command:&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-powershell"&gt;PS&amp;gt; git status
+&lt;pre&gt;&lt;code class="language-powershell"&gt;PS &amp;gt; git status
 On branch source
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="gitignore"&gt;.gitignore&lt;/h2&gt;
+&lt;p&gt;In the next steps we'll start creating the site. In this process some files will be created that we don't want in our Git repository. To automate this you can create a file named &lt;code&gt;.gitignore&lt;/code&gt; in your project root and add these contents:&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-plaintext"&gt;output
+config.wyam.*
+tools
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h1 id="setup-wyam"&gt;Setup Wyam&lt;/h1&gt;
+&lt;p&gt;First install Wyam if you haven't already done this. You can find how to install Wyam in the &lt;a href="https://wyam.io/docs/usage/obtaining"&gt;Wyam Documentation&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Now move into your working directory (&lt;code&gt;yourusername.github.io&lt;/code&gt;) and create a new Wyam project. In this case I'll demonstrate how to create a blog since I think this is the most common use case.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-powershell"&gt;PS &amp;gt; wyam new -r blog
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This will scaffold a new Wyam site with the blog recipe. More about Wyam recipes can be found &lt;a href="https://wyam.io/recipes/"&gt;here&lt;/a&gt;. Since this post is mostly about automated build and deployment, I won't go into any further detail on setting up a Wyam site.&lt;/p&gt;
+&lt;p&gt;You can preview the site with:&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-powershell"&gt;PS &amp;gt; wyam --preview --watch
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This will not only start up a lightweight server, but it will also keep track of your changes and automatically update them. This way you can keep your site running while writing and see the changes in real time.&lt;/p&gt;
+&lt;p&gt;You can build a site with:&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-powershell"&gt;PS &amp;gt; wyam build
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This will build the site. The site contents are located in the &lt;code&gt;output&lt;/code&gt; directory.&lt;/p&gt;
+&lt;?# Note ?&gt;
+&lt;p&gt;Since the &lt;code&gt;output&lt;/code&gt; directory is in the &lt;code&gt;.gitignore&lt;/code&gt; file, it won't be committed to your git repository.
+This is intentionally. We'll build the output directory fully automated on Azure DevOps later on.&lt;/p&gt;
+&lt;?#/ Note ?&gt;
+&lt;p&gt;Now that you've seen your site works it is time to deploy it.&lt;/p&gt;
+&lt;h1 id="azure-devops-setup"&gt;Azure DevOps Setup&lt;/h1&gt;
+&lt;p&gt;If you haven't already created an account on Azure DevOps you should do so now.
+It is completely free for small projects. Once you have an account you can create a new project. I've called mine &lt;code&gt;johanvergeer.github.io&lt;/code&gt;. Creating an account and a new project is such a straight forward process I won't go into any detail on those.&lt;/p&gt;
+&lt;h2 id="azure-pipelines-on-github-marketplace"&gt;Azure Pipelines on GitHub Marketplace&lt;/h2&gt;
+&lt;p&gt;For the easiest integration between Azure DevOps and GitHub you should get the &lt;a href="https://github.com/marketplace/azure-pipelines"&gt;Azure Pipelines&lt;/a&gt; application on the GitHub Marketplace. Setup a plan and link your Azure DevOps project.&lt;/p&gt;
+&lt;p&gt;This will create a default yaml file named &lt;code&gt;azure-pipelines.yml&lt;/code&gt;. We'll change this file later on to match our needs.&lt;/p&gt;
+&lt;h2 id="cake"&gt;Cake&lt;/h2&gt;
+&lt;p&gt;Before we start working on the &lt;code&gt;azure-pipelines.yml&lt;/code&gt; file, we will create a &lt;a href="https://cakebuild.net/"&gt;Cake&lt;/a&gt; build script for our site. The advantage of using this Cake build script is that it can be reused on other locations.&lt;/p&gt;
+&lt;p&gt;Create a file named &lt;code&gt;build.cake&lt;/code&gt; with the following contents:&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-csharp"&gt;#tool nuget:?package=Wyam&amp;amp;version=2.2.4
+#addin nuget:?package=Cake.Wyam&amp;amp;version=2.2.4
+
+var target = Argument(&amp;quot;target&amp;quot;, &amp;quot;Build&amp;quot;);
+
+Task(&amp;quot;Build&amp;quot;)
+    .Does(() =&amp;gt;
+    {
+        Wyam();
+    });
+
+Task(&amp;quot;Preview&amp;quot;)
+    .Does(() =&amp;gt;
+    {
+        Wyam(new WyamSettings
+        {
+            Preview = true,
+            Watch = true
+        });
+    });
+
+RunTarget(target)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now you should &lt;a href="https://cakebuild.net/docs/tutorials/setting-up-a-new-project#install-the-bootstrapper"&gt;install the bootstrapper&lt;/a&gt; by running the following in PowerShell.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-powershell"&gt;PS &amp;gt; Invoke-WebRequest https://cakebuild.net/download/bootstrapper/windows -OutFile build.ps1
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Once you created the build file and installed the bootstrapper you can build and preview.&lt;/p&gt;
+&lt;p&gt;To do a build:&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-powershell"&gt;PS &amp;gt; .\build.ps1 -Target Build
+Preparing to run build script...
+Running build script...
+
+========================================
+Build
+=======================================
+...
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;And to preview&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-powershell"&gt;PS &amp;gt; .\build.ps1 -target Preview
+Preparing to run build script...
+Running build script...
+
+========================================
+Preview
+========================================
+...
+&lt;/code&gt;&lt;/pre&gt;
+&lt;?# Warning ?&gt;
+&lt;p&gt;We'll use this Cake script to build the site on Azure DevOps, so make sure it works before you continue.&lt;/p&gt;
+&lt;?#/ Warning ?&gt;
+&lt;h2 id="azure-pipelines.yml"&gt;azure-pipelines.yml&lt;/h2&gt;
+&lt;p&gt;Now it's time to start creating our &lt;code&gt;azure-pipelines.yml&lt;/code&gt; file so we can build our site on Azure DevOps. This is where the part comes in that might seem hard at first, but is very easy once you get the hang of it, so bear with me. I'll be going trough the &lt;code&gt;azure-pipelines.yml&lt;/code&gt; file step by step and I'll show you the full file at the end.&lt;/p&gt;
+&lt;h3 id="agent"&gt;Agent&lt;/h3&gt;
+&lt;p&gt;In the first part of our file we'll define the &lt;a href="https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops&amp;amp;tabs=yaml"&gt;Agent&lt;/a&gt; that will be used. All possible agents are listed on the &lt;a href="https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops&amp;amp;tabs=yaml#use-a-microsoft-hosted-agent"&gt;Microsoft website&lt;/a&gt;.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-yaml"&gt;pool:
+  vmImage: vs2017-win2016
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id="triggers"&gt;Triggers&lt;/h3&gt;
+&lt;p&gt;Next we're going to describe when a build pipeline should be triggered. If you're interested you can read more about &lt;a href="https://docs.microsoft.com/en-us/azure/devops/pipelines/build/triggers?tabs=yaml&amp;amp;view=azure-devops#continuous-integration-ci"&gt;Build Pipeline Triggers&lt;/a&gt; on the Microsoft website. For now we'll keep it fairly simple.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-yaml"&gt;trigger:
+  branches:
+    include:
+      - source
+    exclude:
+      - master
+  paths:
+    exclude:
+      - .gitignore
+      - README.md
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;In the snippet above we described that all changes in the &lt;code&gt;source&lt;/code&gt; branch should trigger a build, except when only the &lt;code&gt;.gitignore&lt;/code&gt; or &lt;code&gt;README.md&lt;/code&gt; are changed.&lt;/p&gt;
+&lt;h3 id="variables"&gt;Variables&lt;/h3&gt;
+&lt;p&gt;Later on we're going to create a PowerShell script that will take some input variables. But before we do that these variables have to be defined.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-yaml"&gt;variables:
+  COMMIT_MESSAGE: Automated Release $(Release.ReleaseId)
+  DOC_PATH: $(System.DefaultWorkingDirectory)\output
+  GITHUB_EMAIL: username&amp;#64;email.com
+  GITHUB_USERNAME: yourusername
+  REPOSITORY_NAME: yourusername.github.io
+  BRANCH_NAME: master
+&lt;/code&gt;&lt;/pre&gt;
+&lt;table class="table"&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style="text-align: left;"&gt;Variable&lt;/th&gt;
+&lt;th style="text-align: left;"&gt;Description&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;DOC_PATH&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;Path to the site that will be generated by Wyam&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;GITHUB_EMAIL&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;Your GitHub email address&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;REPOSITORY_NAME&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;The name of your GitHub repository&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;BRANCH_NAME&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;Name of the branch the site will be published to. For you main site this should be &lt;code&gt;master&lt;/code&gt;. For other sites this will be gh-pages. See &lt;a href="https://help.github.com/en/articles/configuring-a-publishing-source-for-github-pages"&gt;this GitHub help page&lt;/a&gt; for more info.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h3 id="steps"&gt;Steps&lt;/h3&gt;
+&lt;p&gt;In this build pipeline we're going to define two steps. In the first step the site will be built using the Cake script. In the second step the output files will be deployed to GitHub Pages.&lt;/p&gt;
+&lt;h4 id="build-the-site"&gt;Build the site&lt;/h4&gt;
+&lt;p&gt;In the first step we'll build the site, using the &lt;a href="https://marketplace.visualstudio.com/items?itemName=cake-build.cake"&gt;Cake plugin&lt;/a&gt;. Install this plugin and add the following snippet to &lt;code&gt;azure-pipelines.yml&lt;/code&gt; as a child of &lt;code&gt;steps:&lt;/code&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-yaml"&gt;  - task: cake-build.cake.cake-build-task.Cake&amp;#64;0
+    displayName: &amp;quot;Build Wyam site&amp;quot;
+    inputs:
+      target: Build
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h4 id="publish-to-github-pages"&gt;Publish to GitHub Pages&lt;/h4&gt;
+&lt;p&gt;In this next step we're using a PowerShell script to publish the site to GitHub pages. What this script basically does is clone the &lt;code&gt;master&lt;/code&gt; branch, empty it, add the contents of the output directory, commit, and push it back to the &lt;code&gt;master&lt;/code&gt; branch on GitHub. Once this is done, when you visit GitHub Pages, you should see your site. This PowerShell script also uses the variables we defined earlier.&lt;/p&gt;
+&lt;p&gt;Add the following as another child of &lt;code&gt;steps:&lt;/code&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-yaml"&gt; - powershell: |
+      Write-Host &amp;quot;Cloning existing GitHub Pages branch&amp;quot;
+
+      $workingDir = &amp;quot;$(System.DefaultWorkingDirectory)\master&amp;quot;
+
+      git clone https://${env:GITHUB_USERNAME}:$(githubAccessToken)&amp;#64;github.com/${env:GITHUB_USERNAME}/${env:REPOSITORY_NAME}.git --branch=master $workingDir --quiet
+
+      if ($lastexitcode -gt 0)
+      {
+          Write-Host &amp;quot;##vso[task.logissue type=error;]Unable to clone repository - check username, access token and repository name. Error code $lastexitcode&amp;quot;
+          [Environment]::Exit(1)
+      }
+
+      Write-Host &amp;quot;Deleting current documentation from branch&amp;quot;
+
+      Remove-Item -Path $workingDir\* -Recurse
+
+      Write-Host &amp;quot;Copying new documentation into branch&amp;quot;
+
+      Copy-Item ${env:DOC_PATH}\* $workingDir -recurse -Force
+
+      Write-Host &amp;quot;Committing the GitHub Pages Branch&amp;quot;
+
+      Set-Location $workingDir
+      git config core.autocrlf false
+      git config user.email ${env:GITHUB_EMAIL}
+      git config user.name ${env:GITHUB_USERNAME}
+      git add *
+      git commit -m ${env:COMMIT_MESSAGE}
+
+      if ($lastexitcode -gt 0)
+      {
+          Write-Host &amp;quot;##vso[task.logissue type=error;]Error committing - see earlier log, error code $lastexitcode&amp;quot;
+          [Environment]::Exit(1)
+      }
+
+      Write-Host &amp;quot;Pushing the GitHub Pages Branch&amp;quot;
+
+      git push
+
+      if ($lastexitcode -gt 0)
+      {
+          Write-Host &amp;quot;##vso[task.logissue type=error;]Error pushing to master branch, probably an incorrect Personal Access Token, error code $lastexitcode&amp;quot;
+          [Environment]::Exit(1)
+      }
+
+    displayName: &amp;quot;Deploy to GitHub Pages&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h5 id="github-access-token"&gt;GitHub Access Token&lt;/h5&gt;
+&lt;p&gt;Next to the variables we defined before, this script also contains a secret, &lt;code&gt;$(githubAccessToken)&lt;/code&gt;. The GitHub access token can be created in &lt;code&gt;GitHub settings --&amp;gt; Developer Settings --&amp;gt; Personal Access Tokens&lt;/code&gt;. Click &lt;em&gt;Generate new token&lt;/em&gt;, enter a &lt;em&gt;Token description&lt;/em&gt; and select only the &lt;em&gt;repo&lt;/em&gt; scope. Click &lt;em&gt;Generate token&lt;/em&gt; and copy this token to a safe location.&lt;/p&gt;
+&lt;p&gt;This GitHub access token has to be added as a variable in Azure DevOps. Go to the pipeline and click &lt;em&gt;Edit&lt;/em&gt;. The variables might be hard to find for the untrained eye. Right of the &lt;em&gt;Run&lt;/em&gt; button, click the three dots and click &lt;em&gt;Variables&lt;/em&gt;. Click &lt;em&gt;+ Add&lt;/em&gt;. Name should be &lt;code&gt;githubAccessToken&lt;/code&gt; and the value should be the access token you copied from GitHub before. Next to the value you can click a padlock icon, which will make the value a secret.&lt;/p&gt;
+&lt;h3 id="the-final-file"&gt;The final file&lt;/h3&gt;
+&lt;p&gt;One this I ofter miss when reading a tutorial is the full picture. So here is the full &lt;em&gt;azure-pipelines.yml&lt;/em&gt; file.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-yaml"&gt;variables:
+  COMMIT_MESSAGE: Automated Release $(Release.ReleaseId)
+  DOC_PATH: $(System.DefaultWorkingDirectory)\output
+  GITHUB_EMAIL: username&amp;#64;email.com
+  GITHUB_USERNAME: yourusername
+  REPOSITORY_NAME: yourusername.github.io
+  BRANCH_NAME: master
+
+pool:
+  vmImage: vs2017-win2016
+
+trigger:
+  branches:
+    include:
+      - source
+    exclude:
+      - master
+  paths:
+    exclude:
+      - .gitignore
+      - README.md
+
+
+steps:
+  - task: cake-build.cake.cake-build-task.Cake&amp;#64;0
+    displayName: &amp;quot;Build Wyam site&amp;quot;
+    inputs:
+      target: Build
+
+  - powershell: |
+      Write-Host &amp;quot;Cloning existing GitHub Pages branch&amp;quot;
+
+      $workingDir = &amp;quot;$(System.DefaultWorkingDirectory)\master&amp;quot;
+
+      git clone https://${env:GITHUB_USERNAME}:$(githubAccessToken)&amp;#64;github.com/${env:GITHUB_USERNAME}/${env:REPOSITORY_NAME}.git --branch=master $workingDir --quiet
+
+      if ($lastexitcode -gt 0)
+      {
+          Write-Host &amp;quot;##vso[task.logissue type=error;]Unable to clone repository - check username, access token and repository name. Error code $lastexitcode&amp;quot;
+          [Environment]::Exit(1)
+      }
+
+      Write-Host &amp;quot;Deleting current documentation from branch&amp;quot;
+
+      Remove-Item -Path $workingDir\* -Recurse
+
+      Write-Host &amp;quot;Copying new documentation into branch&amp;quot;
+
+      Copy-Item ${env:DOC_PATH}\* $workingDir -recurse -Force
+
+      Write-Host &amp;quot;Committing the GitHub Pages Branch&amp;quot;
+
+      Set-Location $workingDir
+      git config core.autocrlf false
+      git config user.email ${env:GITHUB_EMAIL}
+      git config user.name ${env:GITHUB_USERNAME}
+      git add *
+      git commit -m ${env:COMMIT_MESSAGE}
+
+      if ($lastexitcode -gt 0)
+      {
+          Write-Host &amp;quot;##vso[task.logissue type=error;]Error committing - see earlier log, error code $lastexitcode&amp;quot;
+          [Environment]::Exit(1)
+      }
+
+      Write-Host &amp;quot;Pushing the GitHub Pages Branch&amp;quot;
+
+      git push
+
+      if ($lastexitcode -gt 0)
+      {
+          Write-Host &amp;quot;##vso[task.logissue type=error;]Error pushing to master branch, probably an incorrect Personal Access Token, error code $lastexitcode&amp;quot;
+          [Environment]::Exit(1)
+      }
+
+    displayName: &amp;quot;Deploy to GitHub Pages&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h1 id="lets-deploy"&gt;Let's Deploy&lt;/h1&gt;
+&lt;p&gt;Now that we're all setup, all we need to do is push to our GitHub repo, which will be picked up by Azure DevOps and a build will start.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-powershell"&gt;PS &amp;gt; git add --all
+PS &amp;gt; git commit -m 'Setup azure-pipelines.yml'
+PS &amp;gt; git push
 &lt;/code&gt;&lt;/pre&gt;
 </content:encoded>
 		</item>
