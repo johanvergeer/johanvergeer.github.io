@@ -34,7 +34,7 @@ steps:
 
       $workingDir = "$(System.DefaultWorkingDirectory)\${BRANCH_NAME}"
 
-      Write-Host ${env:REPOSITORY_NAME}
+      Write-Host ${env:BRANCH_NAME}
 
       git clone https://${env:GITHUB_USERNAME}:$(GITHUB_ACCESS_TOKEN)@github.com/${env:GITHUB_USERNAME}/${env:REPOSITORY_NAME}.git --branch=${BRANCH_NAME} ${BRANCH_NAME} --quiet
 
