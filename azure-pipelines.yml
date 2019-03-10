@@ -9,9 +9,6 @@ variables:
   system.debug: false
   GITHUB_ACCESS_TOKEN: $(githubAccessToken)
 
-pool:
-  vmImage: Hosted VS2017
-
 steps:
 - task: cake-build.cake.cake-build-task.Cake@0
   displayName: 'Build Wyam site'
