@@ -6,6 +6,9 @@ env:
   - PATH=$PATH:$HOME/.dotnet/tools
 script:
   - ./build.sh
+cache:
+  directories:
+    - tools
  # - dotnet tool install -g Wyam.Tool
  # - wyam build
 # install:
