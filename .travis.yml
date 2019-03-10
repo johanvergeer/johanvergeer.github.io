@@ -2,6 +2,8 @@ dist: xenial
 language: csharp
 mono: none
 dotnet: 2.2.104
+env:
+  - PATH=$PATH:$HOME/.dotnet/tools
 script:
   - dotnet tool install -g Wyam.Tool
   - wyam build
