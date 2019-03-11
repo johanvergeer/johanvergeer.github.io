@@ -28,24 +28,24 @@ div.box {
 
 div.box-note {
      background-color: #f0f7fb;
-     background-image: url(../Images/icons/Pencil-48.png);
+     background-image: url(../images/icons/Pencil-48.png);
      border: solid 1px #3498db;
 }
 
 div.box-warning {
      background-color: #FCF7F2;
-     background-image: url(../Images/icons/Warning-48.png);
+     background-image: url(../images/icons/Warning-48.png);
      border: solid 1px #E64636;
 }
 
 div.box-example {
      background-color: #E7F6F0;
-     background-image: url(../Images/icons/Check-48.png);
+     background-image: url(../images/icons/Check-48.png);
      border: solid 1px #2BCB6F;
 }
 
 div.box-tip {
      background-color: #FFFBEA;
-     background-image: url(../Images/icons/Lightbulb-48.png);
+     background-image: url(../images/icons/Lightbulb-48.png);
      border: solid 1px #F1C40F;
 }
