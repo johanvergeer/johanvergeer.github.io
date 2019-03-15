@@ -28,50 +28,50 @@ steps:
     inputs:
       target: Build
 
-  - powershell: |
-      Write-Host "Cloning existing GitHub Pages branch"
+  # - powershell: |
+  #     Write-Host "Cloning existing GitHub Pages branch"
 
-      $workingDir = "$(System.DefaultWorkingDirectory)\master"
+  #     $workingDir = "$(System.DefaultWorkingDirectory)\master"
 
-      git clone https://${env:GITHUB_USERNAME}:$(githubAccessToken)@github.com/${env:GITHUB_USERNAME}/${env:REPOSITORY_NAME}.git --branch=master $workingDir --quiet
+  #     git clone https://${env:GITHUB_USERNAME}:$(githubAccessToken)@github.com/${env:GITHUB_USERNAME}/${env:REPOSITORY_NAME}.git --branch=master $workingDir --quiet
 
-      if ($lastexitcode -gt 0)
-      {
-          Write-Host "##vso[task.logissue type=error;]Unable to clone repository - check username, access token and repository name. Error code $lastexitcode"
-          [Environment]::Exit(1)
-      }
+  #     if ($lastexitcode -gt 0)
+  #     {
+  #         Write-Host "##vso[task.logissue type=error;]Unable to clone repository - check username, access token and repository name. Error code $lastexitcode"
+  #         [Environment]::Exit(1)
+  #     }
 
-      Write-Host "Deleting current documentation from branch"
+  #     Write-Host "Deleting current documentation from branch"
 
-      Remove-Item -Path $workingDir\* -Recurse
+  #     Remove-Item -Path $workingDir\* -Recurse
 
-      Write-Host "Copying new documentation into branch"
+  #     Write-Host "Copying new documentation into branch"
 
-      Copy-Item ${env:DOC_PATH}\* $workingDir -recurse -Force
+  #     Copy-Item ${env:DOC_PATH}\* $workingDir -recurse -Force
 
-      Write-Host "Committing the GitHub Pages Branch"
+  #     Write-Host "Committing the GitHub Pages Branch"
 
-      Set-Location $workingDir
-      git config core.autocrlf false
-      git config user.email ${env:GITHUB_EMAIL}
-      git config user.name ${env:GITHUB_USERNAME}
-      git add *
-      git commit -m ${env:COMMIT_MESSAGE}
+  #     Set-Location $workingDir
+  #     git config core.autocrlf false
+  #     git config user.email ${env:GITHUB_EMAIL}
+  #     git config user.name ${env:GITHUB_USERNAME}
+  #     git add *
+  #     git commit -m ${env:COMMIT_MESSAGE}
 
-      if ($lastexitcode -gt 0)
-      {
-          Write-Host "##vso[task.logissue type=error;]Error committing - see earlier log, error code $lastexitcode"
-          [Environment]::Exit(1)
-      }
+  #     if ($lastexitcode -gt 0)
+  #     {
+  #         Write-Host "##vso[task.logissue type=error;]Error committing - see earlier log, error code $lastexitcode"
+  #         [Environment]::Exit(1)
+  #     }
 
-      Write-Host "Pushing the GitHub Pages Branch"
+  #     Write-Host "Pushing the GitHub Pages Branch"
 
-      git push
+  #     git push
 
-      if ($lastexitcode -gt 0)
-      {
-          Write-Host "##vso[task.logissue type=error;]Error pushing to master branch, probably an incorrect Personal Access Token, error code $lastexitcode"
-          [Environment]::Exit(1)
-      }
+  #     if ($lastexitcode -gt 0)
+  #     {
+  #         Write-Host "##vso[task.logissue type=error;]Error pushing to master branch, probably an incorrect Personal Access Token, error code $lastexitcode"
+  #         [Environment]::Exit(1)
+  #     }
 
-    displayName: "Deploy to GitHub Pages"
+  #   displayName: "Deploy to GitHub Pages"
