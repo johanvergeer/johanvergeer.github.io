@@ -27,6 +27,9 @@ steps:
     displayName: "Build Wyam site"
     inputs:
       target: PushMasterBranch
+    env:
+      GITHUB_ACCESS_TOKEN: $(githubAccessToken)
+      GITHUB_USERNAME: "johanvergeer"
 
   # - powershell: |
   #     Write-Host "Cloning existing GitHub Pages branch"

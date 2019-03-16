@@ -4,7 +4,13 @@
 
 var target = Argument("target", "Default");
 
-var githubUserName = EnvironmentVariable("GITHUB_USER_NAME");
+var githubUserName = EnvironmentVariable("GITHUB_USERNAME");
+
+// The EnvironmentVariable can be set on a dev machine so the access token 
+// doesn't have to be passed on every build.
+// The Argument is used when the EnvironmentVariable cannot be used, 
+// which is the case when building on Azure DevOps
+// var githubAccessToken = EnvironmentVariable("GITHUB_ACCESS_TOKEN") ?? Argument("githubAccessToken");
 var githubAccessToken = EnvironmentVariable("GITHUB_ACCESS_TOKEN");
 
 var tempDir =  GetTempDirectory();
