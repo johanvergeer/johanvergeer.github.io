@@ -43,7 +43,7 @@ Task("CloneMasterBranch")
         Information("Cloning master branch into temp directory");
 
         GitClone(
-            "https://github.com/johanvergeer/johanvergeer.github.io.git",
+            repositoryUrl,
             new DirectoryPath(tempDir),
             githubUserName,
             githubAccessToken,
