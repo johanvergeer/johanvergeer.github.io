@@ -1,17 +1,15 @@
 #tool nuget:?package=Wyam&version=2.2.4
+#tool "nuget:?package=GitVersion.CommandLine&version=4.0.0"
 #addin nuget:?package=Cake.Wyam&version=2.2.4
 #addin nuget:?package=Cake.Git&version=0.19.0
 
 var target = Argument("target", "Default");
 
+var repositoryUrl = "https://github.com/johanvergeer/johanvergeer.github.io.git";
 var githubUserName = EnvironmentVariable("GITHUB_USERNAME");
-
-// The EnvironmentVariable can be set on a dev machine so the access token 
-// doesn't have to be passed on every build.
-// The Argument is used when the EnvironmentVariable cannot be used, 
-// which is the case when building on Azure DevOps
-// var githubAccessToken = EnvironmentVariable("GITHUB_ACCESS_TOKEN") ?? Argument("githubAccessToken");
 var githubAccessToken = EnvironmentVariable("GITHUB_ACCESS_TOKEN");
+
+var gitVersion = GitVersion();
 
 var tempDir =  GetTempDirectory();
 
@@ -122,7 +120,7 @@ Task("CommitMasterBranch")
         Information("Performing Git commit on master branch");
 
         GitAddAll(tempDir);
-        GitCommit(tempDir, "Johan Vergeer", "johanvergeer@gmail.com", "New site released");
+        GitCommit(tempDir, "Johan Vergeer", "johanvergeer@gmail.com", $"Automated release {gitVersion.InformationalVersion}");
     });
 
 Task("PushMasterBranch")

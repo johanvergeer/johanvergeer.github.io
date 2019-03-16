@@ -24,7 +24,7 @@ trigger:
 
 steps:
   - task: cake-build.cake.cake-build-task.Cake@0
-    displayName: "Build Wyam site"
+    displayName: "Build and publish Wyam site"
     inputs:
       target: PushMasterBranch
     env:
