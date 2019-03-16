@@ -38,6 +38,9 @@ Task("Preview")
         });        
     });
 
+Task("Deploy")
+    .IsDependentOn("PushMasterBranch");
+
 Task("CloneMasterBranch")
     .Does(() => {
         Information("Cloning master branch into temp directory");
@@ -80,6 +83,7 @@ Task("EmptyMasterBranch")
 
             if(directoryName == ".git")
             {
+                // Do not delete the .git directory
                 continue;
             }
             
@@ -99,7 +103,7 @@ Task("CopyToMasterBranch")
     .IsDependentOn("Build")
     .IsDependentOn("EmptyMasterBranch")
     .Does(() => {
-        var sourcePath = $"./output";
+        var sourcePath = "./output";
 
         Information("Copying files to master branch");
 

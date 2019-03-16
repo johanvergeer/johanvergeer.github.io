@@ -1,6 +1,6 @@
 ---
 Title: Wyam, Azure DevOps and GitHub Pages
-Published: 3/10/2019
+Published: 3/16/2019
 Tags: [C#, Wyam, Continuous Integration, GitHub Pages, Azure DevOps]
 author: Johan Vergeer
 ---
@@ -99,9 +99,28 @@ Create a file named `build.cake` with the following contents:
 
 ```csharp
 #tool nuget:?package=Wyam&version=2.2.4
+#tool "nuget:?package=GitVersion.CommandLine&version=4.0.0"
 #addin nuget:?package=Cake.Wyam&version=2.2.4
+#addin nuget:?package=Cake.Git&version=0.19.0
 
-var target = Argument("target", "Build");
+var target = Argument("target", "Default");
+
+var repositoryUrl = "https://github.com/username/username.github.io.git";
+var githubUserName = EnvironmentVariable("GITHUB_USERNAME");
+var githubAccessToken = EnvironmentVariable("GITHUB_ACCESS_TOKEN");
+
+var gitVersion = GitVersion();
+
+var tempDir =  GetTempDirectory();
+
+public string GetTempDirectory() {
+    string path = System.IO.Path.GetRandomFileName();
+    return System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(), path)).FullName;
+}
+
+Task("Default")
+    .Does(() => {
+    });
 
 Task("Build")
     .Does(() =>
@@ -119,6 +138,103 @@ Task("Preview")
         });
     });
 
+Task("Deploy")
+    .IsDependentOn("PushMasterBranch");
+
+Task("CloneMasterBranch")
+    .Does(() => {
+        Information("Cloning master branch into temp directory");
+
+        GitClone(
+            repositoryUrl,
+            new DirectoryPath(tempDir),
+            githubUserName,
+            githubAccessToken,
+            new GitCloneSettings {
+                BranchName = "master"
+            }
+        );
+    });
+
+Task("EmptyMasterBranch")
+    .IsDependentOn("CloneMasterBranch")
+    .Does(() => {
+        Information("Emptying master branch");
+
+        string[] filePaths = System.IO.Directory.GetFiles(tempDir);
+
+        foreach (string filePath in filePaths)
+        {
+            var fileName = new FileInfo(filePath).Name;
+            fileName = fileName.ToLower();
+
+            if(System.IO.File.Exists(filePath))
+            {
+                DeleteFile(filePath);
+            }
+        }
+
+        string[] directoryPaths = System.IO.Directory.GetDirectories(tempDir);
+
+        foreach (string directoryPath in directoryPaths)
+        {
+            var directoryName = new FileInfo(directoryPath).Name;
+            directoryName = directoryName.ToLower();
+
+            if(directoryName == ".git")
+            {
+                // Do not delete the .git directory
+                continue;
+            }
+
+            if (System.IO.Directory.Exists(directoryPath))
+            {
+                DeleteDirectory(
+                    directoryPath,
+                    new DeleteDirectorySettings{
+                        Recursive = true,
+                        Force = true
+                });
+            }
+        }
+    });
+
+Task("CopyToMasterBranch")
+    .IsDependentOn("Build")
+    .IsDependentOn("EmptyMasterBranch")
+    .Does(() => {
+        var sourcePath = "./output";
+
+        Information("Copying files to master branch");
+
+        // Now Create all of the directories
+        foreach (string dirPath in System.IO.Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
+        {
+            System.IO.Directory.CreateDirectory(dirPath.Replace(sourcePath, tempDir));
+        } 
+
+        //Copy all the files & Replaces any files with the same name
+        foreach (string newPath in System.IO.Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
+            System.IO.File.Copy(newPath, newPath.Replace(sourcePath, tempDir), true);
+    });
+
+Task("CommitMasterBranch")
+    .IsDependentOn("CopyToMasterBranch")
+    .Does(() => {
+        Information("Performing Git commit on master branch");
+
+        GitAddAll(tempDir);
+        GitCommit(tempDir, "username", "username@email.com", $"Automated release {gitVersion.InformationalVersion}");
+    });
+
+Task("PushMasterBranch")
+    .IsDependentOn("CommitMasterBranch")
+    .Does(() => {
+        Information("Pushing master branch to origin");
+
+        GitPush(tempDir, githubUserName, githubAccessToken, "master");
+    });
+
 RunTarget(target)
 ```
 
@@ -128,7 +244,15 @@ Now you should [install the bootstrapper](https://cakebuild.net/docs/tutorials/s
 PS > Invoke-WebRequest https://cakebuild.net/download/bootstrapper/windows -OutFile build.ps1
 ```
 
-Once you created the build file and installed the bootstrapper you can build and preview.
+<?# Note ?>
+Before doing a build, you should create 2 environment variables: `GITHUB_USERNAME` and `GITHUB_ACCESS_TOKEN`.
+<?#/ Note ?>
+
+<?# Warning ?>
+Be aware that the `GITHUB_ACCESS_TOKEN` is visible to anyone that has access to your environment variables.
+<?#/ Warning ?>
+
+Once you created the build file and installed the bootstrapper you can build, preview and deploy.
 
 To do a build:
 
@@ -143,7 +267,7 @@ Build
 ...
 ```
 
-And to preview
+And to preview:
 
 ```powershell
 PS > .\build.ps1 -target Preview
@@ -156,9 +280,26 @@ Preview
 ...
 ```
 
+And to deploy:
+
+```powershell
+PS > .\build.ps1 -target Deploy
+Preparing to run build script...
+Running build script...
+...
+========================================
+Deploy
+========================================
+...
+```
+
+This last command should have deployed your Wyam site to GitHub Pages, so it's time to check whether it worked.
+
 <?# Warning ?>
 We'll use this Cake script to build the site on Azure DevOps, so make sure it works before you continue.
 <?#/ Warning ?>
+
+The beauty of this way of creating a build script is that once it works on your machine, it will also work on any other device or CI server.
 
 ## azure-pipelines.yml
 
@@ -192,97 +333,26 @@ trigger:
 
 In the snippet above we described that all changes in the `source` branch should trigger a build, except when only the `.gitignore` or `README.md` are changed.
 
-### Variables
-
-Later on we're going to create a PowerShell script that will take some input variables. But before we do that these variables have to be defined.
-
-```yaml
-variables:
-  COMMIT_MESSAGE: Automated Release $(Release.ReleaseId)
-  DOC_PATH: $(System.DefaultWorkingDirectory)\output
-  GITHUB_EMAIL: username@email.com
-  GITHUB_USERNAME: yourusername
-  REPOSITORY_NAME: yourusername.github.io
-  BRANCH_NAME: master
-```
-
-| Variable       | Description                                                                             |
-|:----------------|:-----------------------------------------------------------------------------------------|
-| DOC_PATH | Path to the site that will be generated by Wyam |
-| GITHUB_EMAIL | Your GitHub email address |
-| REPOSITORY_NAME | The name of your GitHub repository
-| BRANCH_NAME | Name of the branch the site will be published to. For you main site this should be `master`. For other sites this will be gh-pages. See [this GitHub help page](https://help.github.com/en/articles/configuring-a-publishing-source-for-github-pages) for more info. |
-
 ### Steps
 
 In this build pipeline we're going to define two steps. In the first step the site will be built using the Cake script. In the second step the output files will be deployed to GitHub Pages.
 
-#### Build the site
+#### Deploy the site
 
-In the first step we'll build the site, using the [Cake plugin](https://marketplace.visualstudio.com/items?itemName=cake-build.cake). Install this plugin and add the following snippet to `azure-pipelines.yml` as a child of `steps:`
+In this first and only step we'll build and deploy the site, using the [Cake plugin](https://marketplace.visualstudio.com/items?itemName=cake-build.cake). Install this plugin and add the following snippet to `azure-pipelines.yml` as a child of `steps:`
 
 ```yaml
+steps:
   - task: cake-build.cake.cake-build-task.Cake@0
-    displayName: "Build Wyam site"
+    displayName: "Build and publish Wyam site"
     inputs:
-      target: Build
+      target: Deploy
+    env:
+      GITHUB_ACCESS_TOKEN: $(githubAccessToken)
+      GITHUB_USERNAME: "githubusername"
 ```
 
-#### Publish to GitHub Pages
-
-In this next step we're using a PowerShell script to publish the site to GitHub pages. What this script basically does is clone the `master` branch, empty it, add the contents of the output directory, commit, and push it back to the `master` branch on GitHub. Once this is done, when you visit GitHub Pages, you should see your site. This PowerShell script also uses the variables we defined earlier.
-
-Add the following as another child of `steps:`
-
-```yaml
- - powershell: |
-      Write-Host "Cloning existing GitHub Pages branch"
-
-      $workingDir = "$(System.DefaultWorkingDirectory)\master"
-
-      git clone https://${env:GITHUB_USERNAME}:$(githubAccessToken)@github.com/${env:GITHUB_USERNAME}/${env:REPOSITORY_NAME}.git --branch=master $workingDir --quiet
-
-      if ($lastexitcode -gt 0)
-      {
-          Write-Host "##vso[task.logissue type=error;]Unable to clone repository - check username, access token and repository name. Error code $lastexitcode"
-          [Environment]::Exit(1)
-      }
-
-      Write-Host "Deleting current documentation from branch"
-
-      Remove-Item -Path $workingDir\* -Recurse
-
-      Write-Host "Copying new documentation into branch"
-
-      Copy-Item ${env:DOC_PATH}\* $workingDir -recurse -Force
-
-      Write-Host "Committing the GitHub Pages Branch"
-
-      Set-Location $workingDir
-      git config core.autocrlf false
-      git config user.email ${env:GITHUB_EMAIL}
-      git config user.name ${env:GITHUB_USERNAME}
-      git add *
-      git commit -m ${env:COMMIT_MESSAGE}
-
-      if ($lastexitcode -gt 0)
-      {
-          Write-Host "##vso[task.logissue type=error;]Error committing - see earlier log, error code $lastexitcode"
-          [Environment]::Exit(1)
-      }
-
-      Write-Host "Pushing the GitHub Pages Branch"
-
-      git push
-
-      if ($lastexitcode -gt 0)
-      {
-          Write-Host "##vso[task.logissue type=error;]Error pushing to master branch, probably an incorrect Personal Access Token, error code $lastexitcode"
-          [Environment]::Exit(1)
-      }
-
-    displayName: "Deploy to GitHub Pages"
-```
+In the script we set the `target` parameter to `Deploy`, which is equivalent to running `.\build.ps1 -target Deploy` on the command line. Furthermore we make the environment variable `GITHUB_ACCESS_TOKEN` reference the `githubAccessToken` secret variable we'll set in the next step. The `GITHUB_USERNAME` can be set to a static value, or you can use a variable on _Azure DevOps_.
 
 ##### GitHub Access Token
 
@@ -292,17 +362,9 @@ This GitHub access token has to be added as a variable in Azure DevOps. Go to th
 
 ### The final file
 
-One this I ofter miss when reading a tutorial is the full picture. So here is the full _azure-pipelines.yml_ file. 
+One this I ofter miss when reading a tutorial is the full picture. So here is the full _azure-pipelines.yml_ file.
 
 ```yaml
-variables:
-  COMMIT_MESSAGE: Automated Release $(Release.ReleaseId)
-  DOC_PATH: $(System.DefaultWorkingDirectory)\output
-  GITHUB_EMAIL: username@email.com
-  GITHUB_USERNAME: yourusername
-  REPOSITORY_NAME: yourusername.github.io
-  BRANCH_NAME: master
-
 pool:
   vmImage: vs2017-win2016
 
@@ -317,60 +379,14 @@ trigger:
       - .gitignore
       - README.md
 
-
 steps:
   - task: cake-build.cake.cake-build-task.Cake@0
-    displayName: "Build Wyam site"
+    displayName: "Build and publish Wyam site"
     inputs:
-      target: Build
-
-  - powershell: |
-      Write-Host "Cloning existing GitHub Pages branch"
-
-      $workingDir = "$(System.DefaultWorkingDirectory)\master"
-
-      git clone https://${env:GITHUB_USERNAME}:$(githubAccessToken)@github.com/${env:GITHUB_USERNAME}/${env:REPOSITORY_NAME}.git --branch=master $workingDir --quiet
-
-      if ($lastexitcode -gt 0)
-      {
-          Write-Host "##vso[task.logissue type=error;]Unable to clone repository - check username, access token and repository name. Error code $lastexitcode"
-          [Environment]::Exit(1)
-      }
-
-      Write-Host "Deleting current documentation from branch"
-
-      Remove-Item -Path $workingDir\* -Recurse
-
-      Write-Host "Copying new documentation into branch"
-
-      Copy-Item ${env:DOC_PATH}\* $workingDir -recurse -Force
-
-      Write-Host "Committing the GitHub Pages Branch"
-
-      Set-Location $workingDir
-      git config core.autocrlf false
-      git config user.email ${env:GITHUB_EMAIL}
-      git config user.name ${env:GITHUB_USERNAME}
-      git add *
-      git commit -m ${env:COMMIT_MESSAGE}
-
-      if ($lastexitcode -gt 0)
-      {
-          Write-Host "##vso[task.logissue type=error;]Error committing - see earlier log, error code $lastexitcode"
-          [Environment]::Exit(1)
-      }
-
-      Write-Host "Pushing the GitHub Pages Branch"
-
-      git push
-
-      if ($lastexitcode -gt 0)
-      {
-          Write-Host "##vso[task.logissue type=error;]Error pushing to master branch, probably an incorrect Personal Access Token, error code $lastexitcode"
-          [Environment]::Exit(1)
-      }
-
-    displayName: "Deploy to GitHub Pages"
+      target: Deploy
+    env:
+      GITHUB_ACCESS_TOKEN: $(githubAccessToken)
+      GITHUB_USERNAME: "johanvergeer"
 ```
 
 # Let's Deploy
