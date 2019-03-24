@@ -16,7 +16,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>My Blog - VS Code Settings</title>
+  <title>My Blog - Exception handling in UML Sequence Diagram</title>
   <meta name="description" content="Welcome!" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">    
 
@@ -40,9 +40,9 @@
   <meta name="msapplication-tooltip" content="My Blog" />
   <meta name="msapplication-starturl" content="/" />
 
-  <meta property="og:title" content="My Blog - VS Code Settings" />
+  <meta property="og:title" content="My Blog - Exception handling in UML Sequence Diagram" />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="http://host.com/posts/vs-code-settings" />
+  <meta property="og:url" content="http://host.com/posts/uml-sequence-diagram-exception-handling" />
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -78,32 +78,62 @@
                 Created on <time datetime="YYYY-03-DD">Sunday, March 24, 2019</time>
                     <span>by Johan Vergeer</span>
             </span>
-            <h1>VS Code Settings</h1>   
+            <h1>Exception handling in UML Sequence Diagram</h1>   
                             <span>
 Tags: 
-                            <a class="nav--white" href="/tags/Visual-Studio-Code">Visual Studio Code</a>
-,                            <a class="nav--white" href="/tags/VS-Code">VS Code</a>
+                            <a class="nav--white" href="/tags/Sequence-Diagrams">Sequence Diagrams</a>
+,                            <a class="nav--white" href="/tags/UML">UML</a>
                 </span>
         </div>
     </header>
     <section class="section-padding bg-grey">
         <div class="post">
-            <p>VS Code is very configurable. In this post I'll share the configuration I like to use.</p>
-<h1 id="auto-save">Auto save</h1>
-<p>Most of the time I like my IDE to save files automatically instead of having to save each and every file independently. I know, I can save all files, but that's still more work that letting the IDE do it.</p>
-<p>To configure this, just add the following to the main object in <code>settings.json</code>:</p>
-<pre><code class="language-json">&quot;files.autoSave&quot;: &quot;afterDelay&quot;
-</code></pre>
+            <blockquote class="blockquote">
+<p>UML provides neither notation to model exception handling in sequence diagrams nor any reasoning why it is absent. Some clumsy approaches to model try-catch blocks are by utilizing <strong>combined fragments - alt</strong> (alternatives) and <strong>breaks</strong>, while adding stereotypes for <strong>reply messages</strong> representing thrown exceptions. There are several proposed notations for exception handling. <a id="fnref:1" href="#fn:1" class="footnote-ref"><sup>1</sup></a></p>
+</blockquote>
+<p>After searching for quite a while on how to model exception handling in a UML Sequence Diagram I found two ways to represent exception handling in a UML Sequence Diagram. They both use interaction operators, <strong>alt</strong> and <strong>break</strong>.</p>
+<h1 id="atm-example">ATM example</h1>
+<p>I'll describe both methods using a classical example: withdraw money from an ATM when the balance is too low.</p>
+<h2 id="happy-flow">Happy flow</h2>
+<p>Let's start with the happy flow. The customer enters the data, the ATM calls a service, which calls the bank's server. The server confirms the withdrawal is approved and, the service passes this on to the ATM's UI and the ATM dispenses the money.</p>
+<p><img src="img/sequence-diagram-exception-handling-happy-flow.jpg" class="img-fluid" alt="Happy flow sequence diagram" /></p>
+<h2 id="alt">Alt</h2>
+<blockquote class="blockquote">
+<p>An alternative interaction operator represents the logic equivalent of an if-then-else statement. Only one of the offered alternatives runs on any pass through the interaction. However, as for any operand, the selected operand in the alternative structure runs only if the guard condition tests true. If there is no guard, the operand always runs when it is selected. The else clause of the alternative combined fragment runs when no other option is selected. <a id="fnref:2" href="#fn:2" class="footnote-ref"><sup>2</sup></a></p>
+</blockquote>
+<p>Let's take a look when the situation when something happens, what causes the ATM to decline de withdrawal. Using an <strong>alt</strong> interaction operator, it would look something like this:</p>
+<p><img src="img/sequence-diagram-exception-handling-alt.jpg" class="img-fluid" alt="Alt interaction operator sequence diagram" /></p>
+<p>This looks nice, for a small diagram, but once the diagram starts to grow and you get a lot of nested <strong>alt</strong> interaction operations, you might start to loose the overview.</p>
+<h2 id="break">Break</h2>
+<blockquote class="blockquote">
+<p>The break interaction operator is similar to the break mechanism in other programming languages. When the guard condition is true , the current interaction run is abandoned and the clause in the break interaction operand runs. <a id="fnref:3" href="#fn:2" class="footnote-ref"><sup>2</sup></a></p>
+</blockquote>
+<p>Let's take a look when the situation when something happens, what causes the ATM to decline de withdrawal. Using a <strong>break</strong> interaction operator, it would look something like this:</p>
+<p><img src="img/sequence-diagram-exception-handling-break.jpg" class="img-fluid" alt="Break interaction operator sequence diagram" /></p>
+<p>In this example the exception isn't caught until it enters the UI, in this case the ATM. What I like about this way of displaying exception handling is that it makes the diagram much less cluttered. I think it even makes things better, because you can see where a sequence stops when an exception occurs. This is ofcourse a very simple example, and you can have a lot more interaction in the <strong>break</strong> interaction operator, like logging or transaction handling.</p>
+<h1 id="conclusion">Conclusion</h1>
+<p>As always, the best method depends on the scenario. But for &quot;simple&quot; exception handling, I think a <strong>break</strong> is a better way to represent it, then <strong>alt</strong>.</p>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn:1">
+<p><a href="https://www.uml-diagrams.org/sequence-diagrams-questions-answers.html">https://www.uml-diagrams.org/sequence-diagrams-questions-answers.html</a><a href="#fnref:1" class="footnote-back-ref">&#8617;</a></p>
+</li>
+<li id="fn:2">
+<p><a href="https://www.ibm.com/support/knowledgecenter/SSRTLW_8.5.5/com.ibm.xtools.sequence.doc/topics/rinteracoperate.html">https://www.ibm.com/support/knowledgecenter/SSRTLW_8.5.5/com.ibm.xtools.sequence.doc/topics/rinteracoperate.html</a><a href="#fnref:2" class="footnote-back-ref">&#8617;</a><a href="#fnref:3" class="footnote-back-ref">&#8617;</a></p>
+</li>
+</ol>
+</div>
  
         </div>          
     </section>
 </article>
 
     <section class="next">
-        <a class="next__link" href="/posts/uml-sequence-diagram-exception-handling" style="background-image: url('/assets/images/background.jpg');">
+        <a class="next__link" href="/posts/vs-code-extensions" style="background-image: url('/assets/images/background.jpg');">
             <div class="next__container">
                 <span>Read Next</span>
-                <h2>Exception handling in UML Sequence Diagram</h2>
+                <h2>VS Code Extensions</h2>
             </div> 
         </a>
     </section>
@@ -112,9 +142,9 @@ Tags:
 <script type="text/javascript">
     /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
     var disqus_shortname = 'johanvergeer-github-io'; // required: replace example with your forum shortname
-    var disqus_identifier = 'vs-code-settings';
-    var disqus_title = 'VS Code Settings';
-    var disqus_url = 'http://host.com/posts/vs-code-settings';
+    var disqus_identifier = 'uml-sequence-diagram-exception-handling';
+    var disqus_title = 'Exception handling in UML Sequence Diagram';
+    var disqus_url = 'http://host.com/posts/uml-sequence-diagram-exception-handling';
 
     /* * * DON'T EDIT BELOW THIS LINE * * */
     (function() {
