@@ -1,0 +1,36 @@
+<div class="main main-raised">
+    <div class="section section-basic">
+        <div class="container">
+            <div class="title mb-5">
+                <h1>Latest posts</h1>
+            </div>
+
+            @foreach(IDocument post in Model.DocumentList(Keys.PageDocuments))
+            {
+                <div class="card mb-5">
+                    <div class="card-header card-header-primary">
+                        @post.WithoutSettings.String(BlogKeys.Title)
+                    </div>
+                    <div class="card-body">
+                            @Html.Raw(post.String(BlogKeys.Excerpt))
+                        <a href="@Context.GetLink(post)">Keep reading</a>  
+                    </div>
+                </div>
+            }
+
+
+            @if(Model.Bool(Keys.HasPreviousPage)) {
+                <a href="@(Context.GetLink(Model.Document(Keys.PreviousPage)))"><span aria-hidden="true">&larr;</span> Newer</a> 
+            } 
+
+            @if(Model.Bool(Keys.HasNextPage)) {
+                <a href="@(Context.GetLink(Model.Document(Keys.NextPage)))">Older <span aria-hidden="true">&rarr;</span></a> 
+            }
+
+            @if(Context.Bool(BlogKeys.GenerateArchive))
+            {
+                <a href="@Context.GetLink(Context.String(BlogKeys.PostsPath))">Archive &rarr;</a>
+            }
+        </div>
+    </div>
+</div>
