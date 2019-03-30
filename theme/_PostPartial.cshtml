@@ -1,0 +1,19 @@
+@model IDocument
+
+@{
+    var published = Model.DateTime(BlogKeys.Published);
+}
+
+<div class="card mb-5">
+    <div class="card-header card-header-primary">
+        @Model.WithoutSettings.String(BlogKeys.Title)
+    </div>
+    <div class="card-body">
+            @Html.Raw(Model.String(BlogKeys.Excerpt))
+        <a href="@Context.GetLink(Model)">Keep reading</a>  
+    </div>
+    <div class="card-footer">
+    <span class="mr-3"><i class="fa fa-user"></i> @Model.String("Author")</span>
+    <span><i class="fa fa-calendar"></i> <time datetime="@published.ToString("YYYY-MM-DD")">@(published.ToLongDateString(Context))</time></span> 
+    </div>
+</div>

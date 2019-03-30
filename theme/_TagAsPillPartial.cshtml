@@ -1,0 +1,12 @@
+@model IDocument
+
+@{
+    string tagName = Model.String(BlogKeys.Tag);
+    string postCount = Model.String(Keys.TotalItems);
+    var firstTagDoc = Model.DocumentList(Keys.PageDocuments).FirstOrDefault();
+}
+
+
+<a href="@Context.GetLink(Model)" class="badge badge-pill badge-lg badge-primary">
+    @tagName (@postCount)
+</a>

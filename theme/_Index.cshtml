@@ -29,21 +29,7 @@
 
                         @foreach(IDocument post in Model.DocumentList(Keys.PageDocuments))
                         {
-                            var published =post.DateTime(BlogKeys.Published);
-
-                            <div class="card mb-5">
-                                <div class="card-header card-header-primary">
-                                    @post.WithoutSettings.String(BlogKeys.Title)
-                                </div>
-                                <div class="card-body">
-                                        @Html.Raw(post.String(BlogKeys.Excerpt))
-                                    <a href="@Context.GetLink(post)">Keep reading</a>  
-                                </div>
-                                <div class="card-footer">
-                                <span class="mr-3"><i class="fa fa-user"></i> @post.String("Author")</span>
-                                <span><i class="fa fa-calendar"></i> <time datetime="@published.ToString("YYYY-MM-DD")">@(published.ToLongDateString(Context))</time></span>
-                                </div>
-                            </div>
+                            @Html.Partial("_PostPartial", post)
                         }
                     </div>
 
@@ -52,18 +38,7 @@
                         <h1>Tags</h1>
 
                         <div>
-                            @foreach (IDocument tagDocument in Documents[Blog.Tags]
-                                .GroupBy(x => x.String(BlogKeys.Tag)).Select(x => x.Where(p => p.Get<int>(Keys.CurrentPage) == 1).First())
-                                .OrderByDescending(x => x.Get<int>(Keys.TotalItems)))
-                            { 
-                                string tagName = tagDocument.String(BlogKeys.Tag);
-                                string postCount = tagDocument.String(Keys.TotalItems);
-                                var firstTagDoc = tagDocument.DocumentList(Keys.PageDocuments).FirstOrDefault();
-
-                                <a href="@Context.GetLink(tagDocument)" class="badge badge-pill badge-lg badge-primary">
-                                    @tagName (@postCount)
-                                </a>
-                            }
+                            @Html.Partial("_AllTagsAsPillPartial")
                         </div>
                     </div>
                 </div>
