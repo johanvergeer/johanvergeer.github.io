@@ -79,16 +79,51 @@
 <div class="main main-raised">
     <div class="section section-basic">
         <div class="container">
-              
-<h2>Creating styled boxes for a Wyam site</h2>
-<h3>Published 3/11/2019</h3>
+                  
 
 
-        <a href="/tags/Csharp">Csharp</a> 
-        <a href="/tags/CSS">CSS</a> 
-        <a href="/tags/Wyam">Wyam</a> 
+<div class="title">
+    <h1>Creating styled boxes for a Wyam site</h1>
+</div>
 
-<a href="/posts">Back To posts</a>
+<div class="row mb-1">
+    <div class="col">
+        
+
+<span class="mr-3"><i class="fa fa-user"></i> Johan Vergeer</span>
+<span><i class="fa fa-calendar"></i> <time datetime="YYYY-03-DD">Monday, March 11, 2019</time></span>
+    </div>    
+</div>
+<div class="row mb-1">
+    <div class="col">
+        
+
+<i class="fas fa-tags"></i> 
+
+
+
+<a href="/tags/Csharp" class="badge badge-pill badge-lg badge-primary">
+    Csharp
+</a>
+
+
+<a href="/tags/Wyam" class="badge badge-pill badge-lg badge-primary">
+    Wyam
+</a>
+
+
+<a href="/tags/CSS" class="badge badge-pill badge-lg badge-primary">
+    CSS
+</a>
+    </div>   
+</div>
+<div class="row">
+    <div class="col">
+        <a href="/posts">Back To posts <i class="fas fa-chevron-right"></i><i class="fas fa-chevron-right"></i></a>
+    </div>
+</div>
+
+<hr>
 
 <p>Sometimes you want to indicate a piece of information is more important then the rest. To do this you can create styled boxes with CSS. I used an example from <a href="https://www.madcapsoftware.com/blog/2017/08/17/css-tip-creating-styled-boxes-notes-warnings-examples-tips/">madcapsoftware.com</a> and applied it to Wyam.</p>
 <p>I did not create a NuGet package for this functionality (yet). But it is fairly simple to create the boxes yourself.</p>
@@ -178,7 +213,30 @@ Tip
 <p>That's all, folks.</p>
 
 
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'johanvergeer-github-io'; // required: replace example with your forum shortname
+    var disqus_identifier = 'creating-styled-boxes';
+    var disqus_title = 'Creating styled boxes for a Wyam site';
+    var disqus_url = 'http://johanvergeer.github.io/posts/creating-styled-boxes';
 
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+    
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
         </div>
     </div>
 </div>

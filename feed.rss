@@ -5,68 +5,8 @@
 		<link>http://johanvergeer.github.io/</link>
 		<description>Welcome!</description>
 		<copyright>2019</copyright>
-		<pubDate>Sat, 30 Mar 2019 11:24:59 GMT</pubDate>
-		<lastBuildDate>Sat, 30 Mar 2019 11:24:59 GMT</lastBuildDate>
-		<item>
-			<title>VS Code Settings</title>
-			<link>http://johanvergeer.github.io/posts/vs-code-settings</link>
-			<description>&lt;p&gt;VS Code is very configurable. In this post I'll share the configuration I like to use.&lt;/p&gt;</description>
-			<author>Johan Vergeer</author>
-			<guid>http://johanvergeer.github.io/posts/vs-code-settings</guid>
-			<pubDate>Sun, 24 Mar 2019 00:00:00 GMT</pubDate>
-			<content:encoded>&lt;p&gt;VS Code is very configurable. In this post I'll share the configuration I like to use.&lt;/p&gt;
-&lt;h1 id="auto-save"&gt;Auto save&lt;/h1&gt;
-&lt;p&gt;Most of the time I like my IDE to save files automatically instead of having to save each and every file independently. I know, I can save all files, but that's still more work that letting the IDE do it.&lt;/p&gt;
-&lt;p&gt;To configure this, just add the following to the main object in &lt;code&gt;settings.json&lt;/code&gt;:&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-json"&gt;&amp;quot;files.autoSave&amp;quot;: &amp;quot;afterDelay&amp;quot;
-&lt;/code&gt;&lt;/pre&gt;
-</content:encoded>
-		</item>
-		<item>
-			<title>Exception handling in UML Sequence Diagram</title>
-			<link>http://johanvergeer.github.io/posts/uml-sequence-diagram-exception-handling</link>
-			<description>&lt;p&gt;UML provides neither notation to model exception handling in sequence diagrams nor any reasoning why it is absent. Some clumsy approaches to model try-catch blocks are by utilizing &lt;strong&gt;combined fragments - alt&lt;/strong&gt; (alternatives) and &lt;strong&gt;breaks&lt;/strong&gt;, while adding stereotypes for &lt;strong&gt;reply messages&lt;/strong&gt; representing thrown exceptions. There are several proposed notations for exception handling. &lt;a id="fnref:1" href="#fn:1" class="footnote-ref"&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/a&gt;&lt;/p&gt;</description>
-			<author>Johan Vergeer</author>
-			<guid>http://johanvergeer.github.io/posts/uml-sequence-diagram-exception-handling</guid>
-			<pubDate>Sun, 24 Mar 2019 00:00:00 GMT</pubDate>
-			<content:encoded>&lt;blockquote class="blockquote"&gt;
-&lt;p&gt;UML provides neither notation to model exception handling in sequence diagrams nor any reasoning why it is absent. Some clumsy approaches to model try-catch blocks are by utilizing &lt;strong&gt;combined fragments - alt&lt;/strong&gt; (alternatives) and &lt;strong&gt;breaks&lt;/strong&gt;, while adding stereotypes for &lt;strong&gt;reply messages&lt;/strong&gt; representing thrown exceptions. There are several proposed notations for exception handling. &lt;a id="fnref:1" href="#fn:1" class="footnote-ref"&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/a&gt;&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;After searching for quite a while on how to model exception handling in a UML Sequence Diagram I found two ways to represent exception handling in a UML Sequence Diagram. They both use interaction operators, &lt;strong&gt;alt&lt;/strong&gt; and &lt;strong&gt;break&lt;/strong&gt;.&lt;/p&gt;
-&lt;h1 id="atm-example"&gt;ATM example&lt;/h1&gt;
-&lt;p&gt;I'll describe both methods using a classical example: withdraw money from an ATM when the balance is too low.&lt;/p&gt;
-&lt;h2 id="happy-flow"&gt;Happy flow&lt;/h2&gt;
-&lt;p&gt;Let's start with the happy flow. The customer enters the data, the ATM calls a service, which calls the bank's server. The server confirms the withdrawal is approved and, the service passes this on to the ATM's UI and the ATM dispenses the money.&lt;/p&gt;
-&lt;p&gt;&lt;img src="img/sequence-diagram-exception-handling-happy-flow.jpg" class="img-fluid" alt="Happy flow sequence diagram" /&gt;&lt;/p&gt;
-&lt;h2 id="alt"&gt;Alt&lt;/h2&gt;
-&lt;blockquote class="blockquote"&gt;
-&lt;p&gt;An alternative interaction operator represents the logic equivalent of an if-then-else statement. Only one of the offered alternatives runs on any pass through the interaction. However, as for any operand, the selected operand in the alternative structure runs only if the guard condition tests true. If there is no guard, the operand always runs when it is selected. The else clause of the alternative combined fragment runs when no other option is selected. &lt;a id="fnref:2" href="#fn:2" class="footnote-ref"&gt;&lt;sup&gt;2&lt;/sup&gt;&lt;/a&gt;&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;Let's take a look when the situation when something happens, what causes the ATM to decline de withdrawal. Using an &lt;strong&gt;alt&lt;/strong&gt; interaction operator, it would look something like this:&lt;/p&gt;
-&lt;p&gt;&lt;img src="img/sequence-diagram-exception-handling-alt.jpg" class="img-fluid" alt="Alt interaction operator sequence diagram" /&gt;&lt;/p&gt;
-&lt;p&gt;This looks nice, for a small diagram, but once the diagram starts to grow and you get a lot of nested &lt;strong&gt;alt&lt;/strong&gt; interaction operations, you might start to loose the overview.&lt;/p&gt;
-&lt;h2 id="break"&gt;Break&lt;/h2&gt;
-&lt;blockquote class="blockquote"&gt;
-&lt;p&gt;The break interaction operator is similar to the break mechanism in other programming languages. When the guard condition is true , the current interaction run is abandoned and the clause in the break interaction operand runs. &lt;a id="fnref:3" href="#fn:2" class="footnote-ref"&gt;&lt;sup&gt;2&lt;/sup&gt;&lt;/a&gt;&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;Let's take a look when the situation when something happens, what causes the ATM to decline de withdrawal. Using a &lt;strong&gt;break&lt;/strong&gt; interaction operator, it would look something like this:&lt;/p&gt;
-&lt;p&gt;&lt;img src="img/sequence-diagram-exception-handling-break.jpg" class="img-fluid" alt="Break interaction operator sequence diagram" /&gt;&lt;/p&gt;
-&lt;p&gt;In this example the exception isn't caught until it enters the UI, in this case the ATM. What I like about this way of displaying exception handling is that it makes the diagram much less cluttered. I think it even makes things better, because you can see where a sequence stops when an exception occurs. This is ofcourse a very simple example, and you can have a lot more interaction in the &lt;strong&gt;break&lt;/strong&gt; interaction operator, like logging or transaction handling.&lt;/p&gt;
-&lt;h1 id="conclusion"&gt;Conclusion&lt;/h1&gt;
-&lt;p&gt;As always, the best method depends on the scenario. But for &amp;quot;simple&amp;quot; exception handling, I think a &lt;strong&gt;break&lt;/strong&gt; is a better way to represent it, then &lt;strong&gt;alt&lt;/strong&gt;.&lt;/p&gt;
-&lt;div class="footnotes"&gt;
-&lt;hr /&gt;
-&lt;ol&gt;
-&lt;li id="fn:1"&gt;
-&lt;p&gt;&lt;a href="https://www.uml-diagrams.org/sequence-diagrams-questions-answers.html"&gt;https://www.uml-diagrams.org/sequence-diagrams-questions-answers.html&lt;/a&gt;&lt;a href="#fnref:1" class="footnote-back-ref"&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
-&lt;/li&gt;
-&lt;li id="fn:2"&gt;
-&lt;p&gt;&lt;a href="https://www.ibm.com/support/knowledgecenter/SSRTLW_8.5.5/com.ibm.xtools.sequence.doc/topics/rinteracoperate.html"&gt;https://www.ibm.com/support/knowledgecenter/SSRTLW_8.5.5/com.ibm.xtools.sequence.doc/topics/rinteracoperate.html&lt;/a&gt;&lt;a href="#fnref:2" class="footnote-back-ref"&gt;&amp;#8617;&lt;/a&gt;&lt;a href="#fnref:3" class="footnote-back-ref"&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
-&lt;/li&gt;
-&lt;/ol&gt;
-&lt;/div&gt;
-</content:encoded>
-		</item>
+		<pubDate>Sun, 31 Mar 2019 11:21:08 GMT</pubDate>
+		<lastBuildDate>Sun, 31 Mar 2019 11:21:08 GMT</lastBuildDate>
 		<item>
 			<title>VS Code Extensions</title>
 			<link>http://johanvergeer.github.io/posts/vs-code-extensions</link>
@@ -128,6 +68,66 @@ Just search for a snippet library for your language and install it.&lt;/p&gt;
 &lt;p&gt;XML Language Support by Red Hat&lt;/p&gt;
 &lt;h1 id="powershell"&gt;PowerShell&lt;/h1&gt;
 &lt;p&gt;Develop PowerShell scripts in Visual Studio Code!&lt;/p&gt;
+</content:encoded>
+		</item>
+		<item>
+			<title>Exception handling in UML Sequence Diagram</title>
+			<link>http://johanvergeer.github.io/posts/uml-sequence-diagram-exception-handling</link>
+			<description>&lt;p&gt;UML provides neither notation to model exception handling in sequence diagrams nor any reasoning why it is absent. Some clumsy approaches to model try-catch blocks are by utilizing &lt;strong&gt;combined fragments - alt&lt;/strong&gt; (alternatives) and &lt;strong&gt;breaks&lt;/strong&gt;, while adding stereotypes for &lt;strong&gt;reply messages&lt;/strong&gt; representing thrown exceptions. There are several proposed notations for exception handling. &lt;a id="fnref:1" href="#fn:1" class="footnote-ref"&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/a&gt;&lt;/p&gt;</description>
+			<author>Johan Vergeer</author>
+			<guid>http://johanvergeer.github.io/posts/uml-sequence-diagram-exception-handling</guid>
+			<pubDate>Sun, 24 Mar 2019 00:00:00 GMT</pubDate>
+			<content:encoded>&lt;blockquote class="blockquote"&gt;
+&lt;p&gt;UML provides neither notation to model exception handling in sequence diagrams nor any reasoning why it is absent. Some clumsy approaches to model try-catch blocks are by utilizing &lt;strong&gt;combined fragments - alt&lt;/strong&gt; (alternatives) and &lt;strong&gt;breaks&lt;/strong&gt;, while adding stereotypes for &lt;strong&gt;reply messages&lt;/strong&gt; representing thrown exceptions. There are several proposed notations for exception handling. &lt;a id="fnref:1" href="#fn:1" class="footnote-ref"&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;After searching for quite a while on how to model exception handling in a UML Sequence Diagram I found two ways to represent exception handling in a UML Sequence Diagram. They both use interaction operators, &lt;strong&gt;alt&lt;/strong&gt; and &lt;strong&gt;break&lt;/strong&gt;.&lt;/p&gt;
+&lt;h1 id="atm-example"&gt;ATM example&lt;/h1&gt;
+&lt;p&gt;I'll describe both methods using a classical example: withdraw money from an ATM when the balance is too low.&lt;/p&gt;
+&lt;h2 id="happy-flow"&gt;Happy flow&lt;/h2&gt;
+&lt;p&gt;Let's start with the happy flow. The customer enters the data, the ATM calls a service, which calls the bank's server. The server confirms the withdrawal is approved and, the service passes this on to the ATM's UI and the ATM dispenses the money.&lt;/p&gt;
+&lt;p&gt;&lt;img src="img/sequence-diagram-exception-handling-happy-flow.jpg" class="img-fluid" alt="Happy flow sequence diagram" /&gt;&lt;/p&gt;
+&lt;h2 id="alt"&gt;Alt&lt;/h2&gt;
+&lt;blockquote class="blockquote"&gt;
+&lt;p&gt;An alternative interaction operator represents the logic equivalent of an if-then-else statement. Only one of the offered alternatives runs on any pass through the interaction. However, as for any operand, the selected operand in the alternative structure runs only if the guard condition tests true. If there is no guard, the operand always runs when it is selected. The else clause of the alternative combined fragment runs when no other option is selected. &lt;a id="fnref:2" href="#fn:2" class="footnote-ref"&gt;&lt;sup&gt;2&lt;/sup&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Let's take a look when the situation when something happens, what causes the ATM to decline de withdrawal. Using an &lt;strong&gt;alt&lt;/strong&gt; interaction operator, it would look something like this:&lt;/p&gt;
+&lt;p&gt;&lt;img src="img/sequence-diagram-exception-handling-alt.jpg" class="img-fluid" alt="Alt interaction operator sequence diagram" /&gt;&lt;/p&gt;
+&lt;p&gt;This looks nice, for a small diagram, but once the diagram starts to grow and you get a lot of nested &lt;strong&gt;alt&lt;/strong&gt; interaction operations, you might start to loose the overview.&lt;/p&gt;
+&lt;h2 id="break"&gt;Break&lt;/h2&gt;
+&lt;blockquote class="blockquote"&gt;
+&lt;p&gt;The break interaction operator is similar to the break mechanism in other programming languages. When the guard condition is true , the current interaction run is abandoned and the clause in the break interaction operand runs. &lt;a id="fnref:3" href="#fn:2" class="footnote-ref"&gt;&lt;sup&gt;2&lt;/sup&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Let's take a look when the situation when something happens, what causes the ATM to decline de withdrawal. Using a &lt;strong&gt;break&lt;/strong&gt; interaction operator, it would look something like this:&lt;/p&gt;
+&lt;p&gt;&lt;img src="img/sequence-diagram-exception-handling-break.jpg" class="img-fluid" alt="Break interaction operator sequence diagram" /&gt;&lt;/p&gt;
+&lt;p&gt;In this example the exception isn't caught until it enters the UI, in this case the ATM. What I like about this way of displaying exception handling is that it makes the diagram much less cluttered. I think it even makes things better, because you can see where a sequence stops when an exception occurs. This is ofcourse a very simple example, and you can have a lot more interaction in the &lt;strong&gt;break&lt;/strong&gt; interaction operator, like logging or transaction handling.&lt;/p&gt;
+&lt;h1 id="conclusion"&gt;Conclusion&lt;/h1&gt;
+&lt;p&gt;As always, the best method depends on the scenario. But for &amp;quot;simple&amp;quot; exception handling, I think a &lt;strong&gt;break&lt;/strong&gt; is a better way to represent it, then &lt;strong&gt;alt&lt;/strong&gt;.&lt;/p&gt;
+&lt;div class="footnotes"&gt;
+&lt;hr /&gt;
+&lt;ol&gt;
+&lt;li id="fn:1"&gt;
+&lt;p&gt;&lt;a href="https://www.uml-diagrams.org/sequence-diagrams-questions-answers.html"&gt;https://www.uml-diagrams.org/sequence-diagrams-questions-answers.html&lt;/a&gt;&lt;a href="#fnref:1" class="footnote-back-ref"&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li id="fn:2"&gt;
+&lt;p&gt;&lt;a href="https://www.ibm.com/support/knowledgecenter/SSRTLW_8.5.5/com.ibm.xtools.sequence.doc/topics/rinteracoperate.html"&gt;https://www.ibm.com/support/knowledgecenter/SSRTLW_8.5.5/com.ibm.xtools.sequence.doc/topics/rinteracoperate.html&lt;/a&gt;&lt;a href="#fnref:2" class="footnote-back-ref"&gt;&amp;#8617;&lt;/a&gt;&lt;a href="#fnref:3" class="footnote-back-ref"&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+</content:encoded>
+		</item>
+		<item>
+			<title>VS Code Settings</title>
+			<link>http://johanvergeer.github.io/posts/vs-code-settings</link>
+			<description>&lt;p&gt;VS Code is very configurable. In this post I'll share the configuration I like to use.&lt;/p&gt;</description>
+			<author>Johan Vergeer</author>
+			<guid>http://johanvergeer.github.io/posts/vs-code-settings</guid>
+			<pubDate>Sun, 24 Mar 2019 00:00:00 GMT</pubDate>
+			<content:encoded>&lt;p&gt;VS Code is very configurable. In this post I'll share the configuration I like to use.&lt;/p&gt;
+&lt;h1 id="auto-save"&gt;Auto save&lt;/h1&gt;
+&lt;p&gt;Most of the time I like my IDE to save files automatically instead of having to save each and every file independently. I know, I can save all files, but that's still more work that letting the IDE do it.&lt;/p&gt;
+&lt;p&gt;To configure this, just add the following to the main object in &lt;code&gt;settings.json&lt;/code&gt;:&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-json"&gt;&amp;quot;files.autoSave&amp;quot;: &amp;quot;afterDelay&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
 </content:encoded>
 		</item>
 		<item>
