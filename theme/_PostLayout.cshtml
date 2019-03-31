@@ -1,0 +1,33 @@
+    
+@{
+    Layout="_Layout";
+    var published = Model.Get<DateTime>(BlogKeys.Published);   
+    var Tags = Model.Get<string[]>(BlogKeys.Tags) ?? new string[] {};
+}
+
+
+<div class="title">
+    <h1>@Model.WithoutSettings.String(BlogKeys.Title)</h1>
+</div>
+
+<div class="row mb-1">
+    <div class="col">
+        @Html.Partial("Partials/Posts/_AuthorAndPublishedPartial")
+    </div>    
+</div>
+<div class="row mb-1">
+    <div class="col">
+        @Html.Partial("Partials/Tags/_AllTagsForPostPartial")
+    </div>   
+</div>
+<div class="row">
+    <div class="col">
+        <a href="@Context.GetLink(Context.String(BlogKeys.PostsPath))">Back To posts <i class="fas fa-chevron-right"></i><i class="fas fa-chevron-right"></i></a>
+    </div>
+</div>
+
+<hr>
+
+
+
+@RenderBody()
