@@ -5,8 +5,164 @@
 		<link>http://johanvergeer.github.io/</link>
 		<description>Welcome!</description>
 		<copyright>2019</copyright>
-		<pubDate>Sun, 31 Mar 2019 14:29:23 GMT</pubDate>
-		<lastBuildDate>Sun, 31 Mar 2019 14:29:23 GMT</lastBuildDate>
+		<pubDate>Sun, 31 Mar 2019 18:01:18 GMT</pubDate>
+		<lastBuildDate>Sun, 31 Mar 2019 18:01:18 GMT</lastBuildDate>
+		<item>
+			<title>ASP.NET Core seeding the database</title>
+			<link>http://johanvergeer.github.io/posts/asp-net-core-seeding-databse</link>
+			<description>&lt;p&gt;It can be useful to seed the database with initial data. In this post we'll take a look at one way of achieving this.&lt;/p&gt;</description>
+			<author>Johan Vergeer</author>
+			<guid>http://johanvergeer.github.io/posts/asp-net-core-seeding-databse</guid>
+			<pubDate>Sun, 31 Mar 2019 00:00:00 GMT</pubDate>
+			<content:encoded>&lt;p&gt;It can be useful to seed the database with initial data. In this post we'll take a look at one way of achieving this.&lt;/p&gt;
+&lt;h2 id="domain-model"&gt;Domain model&lt;/h2&gt;
+&lt;p&gt;In this example we'll use a simple domain model.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-csharp"&gt;class Person
+{
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+    public int Age { get; set; }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="dbcontext"&gt;DbContext&lt;/h2&gt;
+&lt;p&gt;Before seeding the database we have to let &lt;code&gt;DbContext&lt;/code&gt; know about our &lt;code&gt;Person&lt;/code&gt; model.&lt;/p&gt;
+&lt;?# Note ?&gt;
+&lt;p&gt;This post won't go into any detail about &lt;code&gt;DbContext&lt;/code&gt;. If you would like to have more information you can read about it on &lt;a href="https://docs.microsoft.com/en-us/ef/core/miscellaneous/configuring-dbcontext"&gt;Microsoft Docs about Configuring a DbContext&lt;/a&gt;&lt;/p&gt;
+&lt;?#/ Note ?&gt;
+&lt;p&gt;This is a very simple &lt;code&gt;DbContext&lt;/code&gt; implementation for this example.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-csharp"&gt;public class MyDbContext : DbContext
+{
+    public MyDbContext() : base()
+    {
+    }
+
+    public MyDbContext(DbContextOptions options) : base(options)
+    {
+    }
+
+    public virtual DbSet&amp;lt;Person&amp;gt; People { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity&amp;lt;Person&amp;gt;().ToTable(&amp;quot;People&amp;quot;);
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="connection-string-and-building-the-database"&gt;Connection string and building the database&lt;/h2&gt;
+&lt;p&gt;Without going into too much detail, I'll show you how to setup the connection string and build the database.&lt;/p&gt;
+&lt;p&gt;First you need to set the connection string in &lt;code&gt;appsettings.json&lt;/code&gt;.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-json"&gt;&amp;quot;ConnectionStrings&amp;quot;: {
+    &amp;quot;DefaultConnection&amp;quot;:  &amp;quot;Server=(localdb)\\mssqllocaldb;Database=MyDatabase;Trusted_Connection=True;MultipleActiveResultSets=true&amp;quot; 
+} 
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Next you need to add &lt;code&gt;MyDbContext&lt;/code&gt; to the &lt;code&gt;ConfigureServices()&lt;/code&gt; method of the &lt;code&gt;Startup()&lt;/code&gt; class.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-csharp"&gt;public void ConfigureServices(IServiceCollection services)
+{
+    // Get the connection string from appsettings.json
+    var connection = Configuration.GetConnectionString(&amp;quot;DefaultConnection&amp;quot;) ?? &amp;quot;testingconnection&amp;quot;;
+
+    // Add MyDbContext to the service collection and tell it to use Sql Server as a database provider
+    services.AddDbContext&amp;lt;MyDbContext&amp;gt;(options =&amp;gt;
+        options.UseSqlServer(connection)
+    );
+
+    // Some other settings
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Finally you can create the migrations and update the database&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-powershell"&gt;&amp;gt; dotnet ef migrations add AddPersonModel
+info: Microsoft.EntityFrameworkCore.Infrastructure[10403]
+      Entity Framework Core 2.2.1-servicing-10028 initialized 'MyDbContext' using provider 'Microsoft.EntityFrameworkCore.SqlServer' with options: None
+Done. To undo this action, use 'ef migrations remove'
+&amp;gt; dotnet ef database update
+info: Microsoft.EntityFrameworkCore.Infrastructure[10403]
+      Entity Framework Core 2.2.1-servicing-10028 initialized 'MyDbContext' using provider 'Microsoft.EntityFrameworkCore.SqlServer' with options: None
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (322ms) [Parameters=[], CommandType='Text', CommandTimeout='60']
+      CREATE DATABASE [MyDatabase];
+... Some more output
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="dbinitializer"&gt;DbInitializer&lt;/h2&gt;
+&lt;p&gt;The responsibility of the &lt;code&gt;DbInitializer&lt;/code&gt; class is to initialize data in the database.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-csharp"&gt;public class DbInitializer
+{
+    public static void Initialize(MyDbContext context, IServiceProvider services)
+    {
+        // Get a logger
+        var logger = services.GetRequiredService&amp;lt;ILogger&amp;lt;DbInitializer&amp;gt;&amp;gt;();
+
+        // Make sure the database is created
+        // We already did this in the previous step
+        context.Database.EnsureCreated();
+
+        if (context.Authors.Any())
+        {
+            logger.LogInformation(&amp;quot;The database was already seeded&amp;quot;);
+            return;
+        }
+
+        logger.LogInformation(&amp;quot;Start seeding the database.&amp;quot;);
+
+        var person = new Person
+        {
+            FirstName = &amp;quot;Johan&amp;quot;,
+            LastName = &amp;quot;Vergeer&amp;quot;,
+            Age = 32
+        };
+
+        context.People.Add(person);
+        context.SaveChanges();
+
+        logger.LogInformation(&amp;quot;Finished seeding the database.&amp;quot;);
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;I think this is pretty self explanatory, but I'll add some explanation. The static &lt;code&gt;Initialize()&lt;/code&gt; method takes a &lt;code&gt;MyDbContext&lt;/code&gt; and an &lt;code&gt;IServiceProvider&lt;/code&gt; instance as input parameters. We'll see in the next step how these are passed in. Especially in these setup methods I prefer to log too much over too little. They won't be called more then once in the lifetime of the application, so they won't clutter your log very much, and it gives us some insights that have proven to be very useful to me.&lt;/p&gt;
+&lt;p&gt;We just create one &lt;code&gt;Person&lt;/code&gt; object, which is added to &lt;code&gt;MyDbContext&lt;/code&gt;, after which &lt;code&gt;MyDbContext&lt;/code&gt; saves the &lt;code&gt;Person&lt;/code&gt; to the database.&lt;/p&gt;
+&lt;h2 id="use-dbinitializer"&gt;Use DbInitializer&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;DbInitializer&lt;/code&gt; should run after the application has started, and before the user starts using it. Because we also want to be able to seed a database with other data while testing, the database can't be initialized in &lt;code&gt;Startup&lt;/code&gt;. Therefore we put the initialization in the &lt;code&gt;Program&lt;/code&gt; class, right after the host is built.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-csharp"&gt;public class Program
+{
+    public static void Main(string[] args)
+    {
+        var host = CreateWebHostBuilder(args).Build();
+
+        SeedDatabase(host);
+
+        host.Run();
+    }
+
+    public static IWebHostBuilder CreateWebHostBuilder(string[] args) =&amp;gt;
+        WebHost.CreateDefaultBuilder(args)
+            .UseStartup&amp;lt;Startup&amp;gt;();
+
+    private static void SeedDatabase(IWebHost host)
+    {
+        using (var scope = host.Services.CreateScope())
+        {
+            var services = scope.ServiceProvider;
+            try
+            {
+                var context = services.GetRequiredService&amp;lt;MyDbContext&amp;gt;();
+
+                DbInitializer.Initialize(context, services);
+            }
+            catch (Exception ex)
+            {
+                var logger = services.GetRequiredService&amp;lt;ILogger&amp;lt;Program&amp;gt;&amp;gt;();
+                logger.LogError(&amp;quot;An error occurred while seeding the database&amp;quot;);
+            }
+        }
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;As you can see, we can get &lt;code&gt;MyDbContext&lt;/code&gt; from the services collection because we already ran &lt;code&gt;Startup&lt;/code&gt;.
+Here we pass the &lt;code&gt;context&lt;/code&gt; and the &lt;code&gt;IServiceProvider&lt;/code&gt; instance, &lt;code&gt;services&lt;/code&gt;, to the &lt;code&gt;Initialize()&lt;/code&gt; method of &lt;code&gt;DbInitializer&lt;/code&gt;, where
+&lt;code&gt;context&lt;/code&gt; is used to add and save the &lt;code&gt;Person&lt;/code&gt; instance to the database, and &lt;code&gt;services&lt;/code&gt; is used to get the &lt;code&gt;ILogger&lt;/code&gt; instance.&lt;/p&gt;
+&lt;h1 id="run-the-application"&gt;Run the application&lt;/h1&gt;
+&lt;p&gt;Now when we run the application for the first time, the data is seeded to the database.&lt;/p&gt;
+</content:encoded>
+		</item>
 		<item>
 			<title>ASP.NET Core integration tests</title>
 			<link>http://johanvergeer.github.io/posts/asp-net-core-integration-tests</link>
@@ -78,21 +234,6 @@ When all is working as expected, your test should pass and you can move on to th
 &lt;/li&gt;
 &lt;/ol&gt;
 &lt;/div&gt;
-</content:encoded>
-		</item>
-		<item>
-			<title>VS Code Settings</title>
-			<link>http://johanvergeer.github.io/posts/vs-code-settings</link>
-			<description>&lt;p&gt;VS Code is very configurable. In this post I'll share the configuration I like to use.&lt;/p&gt;</description>
-			<author>Johan Vergeer</author>
-			<guid>http://johanvergeer.github.io/posts/vs-code-settings</guid>
-			<pubDate>Sun, 24 Mar 2019 00:00:00 GMT</pubDate>
-			<content:encoded>&lt;p&gt;VS Code is very configurable. In this post I'll share the configuration I like to use.&lt;/p&gt;
-&lt;h1 id="auto-save"&gt;Auto save&lt;/h1&gt;
-&lt;p&gt;Most of the time I like my IDE to save files automatically instead of having to save each and every file independently. I know, I can save all files, but that's still more work that letting the IDE do it.&lt;/p&gt;
-&lt;p&gt;To configure this, just add the following to the main object in &lt;code&gt;settings.json&lt;/code&gt;:&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-json"&gt;&amp;quot;files.autoSave&amp;quot;: &amp;quot;afterDelay&amp;quot;
-&lt;/code&gt;&lt;/pre&gt;
 </content:encoded>
 		</item>
 		<item>
@@ -201,6 +342,21 @@ Just search for a snippet library for your language and install it.&lt;/p&gt;
 &lt;p&gt;XML Language Support by Red Hat&lt;/p&gt;
 &lt;h1 id="powershell"&gt;PowerShell&lt;/h1&gt;
 &lt;p&gt;Develop PowerShell scripts in Visual Studio Code!&lt;/p&gt;
+</content:encoded>
+		</item>
+		<item>
+			<title>VS Code Settings</title>
+			<link>http://johanvergeer.github.io/posts/vs-code-settings</link>
+			<description>&lt;p&gt;VS Code is very configurable. In this post I'll share the configuration I like to use.&lt;/p&gt;</description>
+			<author>Johan Vergeer</author>
+			<guid>http://johanvergeer.github.io/posts/vs-code-settings</guid>
+			<pubDate>Sun, 24 Mar 2019 00:00:00 GMT</pubDate>
+			<content:encoded>&lt;p&gt;VS Code is very configurable. In this post I'll share the configuration I like to use.&lt;/p&gt;
+&lt;h1 id="auto-save"&gt;Auto save&lt;/h1&gt;
+&lt;p&gt;Most of the time I like my IDE to save files automatically instead of having to save each and every file independently. I know, I can save all files, but that's still more work that letting the IDE do it.&lt;/p&gt;
+&lt;p&gt;To configure this, just add the following to the main object in &lt;code&gt;settings.json&lt;/code&gt;:&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-json"&gt;&amp;quot;files.autoSave&amp;quot;: &amp;quot;afterDelay&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
 </content:encoded>
 		</item>
 		<item>
