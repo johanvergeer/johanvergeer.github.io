@@ -9,8 +9,6 @@ Settings[Keys.Host] = "johanvergeer.github.io";
 Settings[BlogKeys.Title] = "I'm Johan";
 Settings[BlogKeys.Description] = "Welcome!";
 
-// Add any pipeline customizations here
-
 int renderPagesIndex = Pipelines.IndexOf(Blog.RenderPages);
 Pipelines.Remove(Blog.RenderPages);
 Pipelines.Insert(
@@ -21,10 +19,47 @@ Pipelines.Insert(
         new Wyam.Web.Pipelines.RenderPagesSettings
         {
             Pipelines = new string[] { "Pages" },
+			// Use `Layout` in frontmatter to set a different Layout
+			// Default is _Layout
             Layout = (doc, ctx) => doc.String("Layout", "/_Layout.cshtml")
         }
 	)
 );
+
+class GlossaryItem {
+	public string Name { get; set; }
+	public System.Collections.Generic.IEnumerable<string> Authors { get; set; }
+	public string WebPageName { get; set; }
+	public string WebsiteName { get; set; }
+	public int Year { get; set; }
+	public int Month { get; set; }
+	public int Day { get; set; }
+	public string Url { get; set; }
+}
+
+class Glossary {
+	public System.Collections.Generic.IEnumerable<GlossaryItem> Items { get; set; }
+}
+
+using(var glossaryInput = new System.IO.StreamReader("input/glossary.yml"))
+{
+	var yamlNamingConvention = new YamlDotNet.Serialization.NamingConventions.CamelCaseNamingConvention();
+
+	var deserializer = new YamlDotNet.Serialization.DeserializerBuilder()
+		.WithNamingConvention(yamlNamingConvention)
+		.Build();
+
+	var glossary = deserializer.Deserialize<GlossaryItem>(glossaryInput);
+
+	if (glossary == null)
+	{
+		System.Console.WriteLine("Glossary is not set");
+	}
+	else
+	{
+		System.Console.WriteLine(glossary.GetType());
+	}
+}
 
 // var replace = new Replace("MyFoo", "YourBar");
 // var include = new Include();
