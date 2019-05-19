@@ -1,6 +1,6 @@
 ---
 Title: Annotations vs Fluent API in EF Core
-Published: 4/11/2019
+Published: 4/11/2099
 Tags: [Csharp,Entity Framework Core]
 author: Johan Vergeer
 ---
